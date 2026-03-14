@@ -1,0 +1,213 @@
+/*  ============================================================
+    DEMOLITION — Global CSS Nuke
+    "Foobar Look": monospace, high-contrast, text-only.
+    Injected on every page via content_scripts at document_start.
+    ============================================================ */
+
+/* ---- Hard Reset ---- */
+*, *::before, *::after {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  opacity: 1 !important;
+  font-family: "Cascadia Mono", "Fira Code", "SF Mono", "Consolas", "Liberation Mono", monospace !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  text-decoration: none !important;
+  line-height: 1.5 !important;
+  color: #c0c0c0 !important;
+  font-size: 13px !important;
+}
+
+/* ---- Root Canvas ---- */
+html {
+  background-color: #0a0a0a !important;
+  scrollbar-color: #333 #0a0a0a !important;
+}
+
+body {
+  background-color: #0a0a0a !important;
+  color: #c0c0c0 !important;
+  max-width: 960px !important;
+  margin: 0 auto !important;
+  padding: 8px 16px !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* ---- Kill Visual Bloat ---- */
+img, picture, canvas, svg,
+embed, object, applet,
+figure, figcaption,
+[role="img"],
+[style*="background-image"],
+[class*="hero"],
+[class*="banner"],
+[class*="carousel"],
+[class*="slider"],
+[class*="modal"],
+[class*="popup"],
+[class*="overlay"],
+[class*="toast"],
+[class*="notification"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+}
+
+/* ---- Ensure Video/Audio Plays ---- */
+video, audio, iframe {
+  display: block !important;
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* ---- Semantic Typography ---- */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: bold !important;
+  color: #e0e0e0 !important;
+  margin-top: 12px !important;
+  margin-bottom: 4px !important;
+  border-bottom: 1px solid #333 !important;
+  padding-bottom: 2px !important;
+}
+
+h1 { font-size: 18px !important; }
+h2 { font-size: 16px !important; }
+h3 { font-size: 15px !important; }
+h4, h5, h6 { font-size: 14px !important; }
+
+p, li, td, th, dd, dt, span, label, div {
+  font-size: 13px !important;
+  color: #c0c0c0 !important;
+}
+
+/* ---- Links ---- */
+a, a:visited, a:active {
+  color: #00ff41 !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+}
+
+a:hover {
+  color: #33ff66 !important;
+}
+
+/* ---- Lists ---- */
+ul, ol {
+  list-style-position: inside !important;
+  margin-left: 16px !important;
+  margin-bottom: 4px !important;
+}
+
+ul { list-style-type: disc !important; }
+ol { list-style-type: decimal !important; }
+
+li {
+  display: list-item !important;
+  margin-bottom: 2px !important;
+}
+
+/* ---- Tables ---- */
+table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  margin-bottom: 8px !important;
+}
+
+th, td {
+  border: 1px solid #333 !important;
+  padding: 4px 8px !important;
+  text-align: left !important;
+}
+
+th {
+  color: #e0e0e0 !important;
+  font-weight: bold !important;
+  background-color: #1a1a1a !important;
+}
+
+tr:nth-child(even) td {
+  background-color: #111 !important;
+}
+
+/* ---- Block Elements ---- */
+pre, code, kbd, samp {
+  background-color: #111 !important;
+  color: #00ff41 !important;
+  padding: 2px 4px !important;
+  font-size: 13px !important;
+}
+
+pre {
+  padding: 8px !important;
+  border: 1px solid #333 !important;
+  overflow-x: auto !important;
+  margin-bottom: 8px !important;
+}
+
+blockquote {
+  border-left: 3px solid #00ff41 !important;
+  padding-left: 12px !important;
+  color: #999 !important;
+  margin-bottom: 8px !important;
+}
+
+hr {
+  display: block !important;
+  height: 1px !important;
+  border-top: 1px solid #333 !important;
+  margin: 8px 0 !important;
+}
+
+/* ---- Forms ---- */
+input, textarea, select, button {
+  background-color: #111 !important;
+  color: #c0c0c0 !important;
+  border: 1px solid #333 !important;
+  padding: 4px 8px !important;
+  font-size: 13px !important;
+}
+
+button, input[type="submit"], input[type="button"] {
+  color: #00ff41 !important;
+  cursor: pointer !important;
+}
+
+button:hover, input[type="submit"]:hover {
+  background-color: #1a1a1a !important;
+  color: #33ff66 !important;
+}
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333 !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555 !important;
+}
