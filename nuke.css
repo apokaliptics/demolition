@@ -71,10 +71,25 @@ figure, figcaption,
 }
 
 /* ---- Ensure Video/Audio Plays ---- */
-video, audio, iframe {
+video, audio, iframe,
+#movie_player,
+.html5-video-player,
+ytd-player,
+#player-container-outer,
+#player-container-inner,
+#player,
+[id^="player-"] {
   display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
   max-width: 100% !important;
   height: auto !important;
+}
+
+video {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 480px !important;
 }
 
 /* ---- Semantic Typography ---- */
