@@ -8,6 +8,9 @@
 (function () {
   "use strict";
 
+  // Netflix text replacement is reserved for full demolition mode.
+  if (document.documentElement.getAttribute("data-demolition-level") !== "2") return;
+
   // Don't run on the player page — let the user watch
   if (/\/watch\//.test(window.location.pathname)) return;
 

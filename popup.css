@@ -1,0 +1,158 @@
+:root {
+  --bg: #05060a;
+  --panel: #0f1219;
+  --panel-alt: #131a25;
+  --ink: #d9dfeb;
+  --muted: #8f99ac;
+  --accent: #67ffa3;
+  --warn: #ffd56a;
+  --border: #2f3a52;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  width: 420px;
+  max-height: 640px;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at 0% 0%, #183046 0%, transparent 48%),
+    radial-gradient(circle at 100% 100%, #2a1a35 0%, transparent 42%),
+    var(--bg);
+  color: var(--ink);
+  font-family: "Cascadia Mono", "Fira Code", "Consolas", monospace;
+}
+
+.app {
+  padding: 12px;
+}
+
+.panel {
+  background: linear-gradient(180deg, var(--panel) 0%, #0d1017 100%);
+  border: 1px solid var(--border);
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.panel-accent {
+  background: linear-gradient(180deg, #111827 0%, var(--panel-alt) 100%);
+}
+
+.panel-stat {
+  border-color: #4a566f;
+}
+
+h1, h2 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+h1 {
+  font-size: 14px;
+}
+
+.muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  margin: 7px 0;
+  gap: 10px;
+}
+
+.levels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.levels label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--border);
+  padding: 6px;
+  font-size: 12px;
+}
+
+.counter {
+  margin: 4px 0;
+  font-size: 20px;
+  color: var(--warn);
+}
+
+form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+}
+
+input[type="text"] {
+  background: #090b12;
+  border: 1px solid var(--border);
+  color: var(--ink);
+  padding: 8px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+button {
+  background: #141f2f;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1b2b40;
+}
+
+.results {
+  margin-top: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+}
+
+.result-item {
+  padding: 7px 0;
+  border-bottom: 1px dashed #2a3348;
+}
+
+.result-item a {
+  color: #9bffbe;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.result-url {
+  color: #8ca8ff;
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.result-snippet {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.status {
+  margin: 0;
+  font-size: 11px;
+  color: #93b8ff;
+}

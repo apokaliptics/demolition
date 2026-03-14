@@ -1,29 +1,36 @@
 {
   "manifest_version": 3,
   "name": "Demolition",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Hyper-minimalist text-first universal client. Blocks bloat, nukes CSS, bypasses launchers.",
   "permissions": [
     "activeTab",
+    "browsingData",
+    "cookies",
     "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
+    "declarativeNetRequestWithHostAccess",
+    "scripting",
+    "storage",
     "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "https://duckduckgo.com/*",
+    "https://html.duckduckgo.com/*",
+    "https://music.youtube.com/*"
   ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+  "action": {
+    "default_title": "Demolition Dashboard",
+    "default_popup": "popup.html"
+  },
   "background": {
     "service_worker": "background.js"
-  },
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "block_bloat",
-        "enabled": true,
-        "path": "rules.json"
-      }
-    ]
   },
   "content_scripts": [
     {
@@ -47,6 +54,18 @@
         "*://www.netflix.com/*"
       ],
       "js": ["netflix.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["vim.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "*://music.youtube.com/*"
+      ],
+      "js": ["ytmusic.js"],
       "run_at": "document_idle"
     }
   ]

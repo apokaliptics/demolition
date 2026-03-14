@@ -1,11 +1,41 @@
 /*  ============================================================
-    DEMOLITION — Global CSS Nuke
-    "Foobar Look": monospace, high-contrast, text-only.
-    Injected on every page via content_scripts at document_start.
+    DEMOLITION - Global CSS Nuke
+    Level-aware styling model:
+      Level 0: off (no visual override)
+      Level 1: soft (layout preserved)
+      Level 2: demolition + columnar text mode
     ============================================================ */
 
-/* ---- Hard Reset ---- */
-*, *::before, *::after {
+:root {
+  --demo-bg: #0a0a0a;
+  --demo-ink: #c0c0c0;
+  --demo-link: #00ff41;
+  --demo-border: #333;
+  --demo-panel: #111;
+}
+
+/* ---- Level 1 (Soft Nuke): preserve layout but remove noisy banners/media ---- */
+html[data-demolition-level="1"] [class*="hero" i],
+html[data-demolition-level="1"] [class*="banner" i],
+html[data-demolition-level="1"] [class*="carousel" i],
+html[data-demolition-level="1"] [class*="slider" i],
+html[data-demolition-level="1"] [class*="popup" i],
+html[data-demolition-level="1"] [class*="overlay" i],
+html[data-demolition-level="1"] [class*="toast" i],
+html[data-demolition-level="1"] [class*="newsletter" i] {
+  display: none !important;
+}
+
+/* ---- Level 2 (Demolition): hard reset and text-mode canvas ---- */
+html[data-demolition-level="2"],
+html[data-demolition-level="2"] body {
+  background-color: var(--demo-bg) !important;
+  color: var(--demo-ink) !important;
+}
+
+html[data-demolition-level="2"] *,
+html[data-demolition-level="2"] *::before,
+html[data-demolition-level="2"] *::after {
   margin: 0 !important;
   padding: 0 !important;
   border: none !important;
@@ -27,42 +57,97 @@
   letter-spacing: 0 !important;
   text-transform: none !important;
   text-decoration: none !important;
-  line-height: 1.5 !important;
-  color: #c0c0c0 !important;
+  line-height: 1.45 !important;
+  color: var(--demo-ink) !important;
   font-size: 13px !important;
 }
 
-/* ---- Root Canvas ---- */
-html {
-  background-color: #0a0a0a !important;
-  scrollbar-color: #333 #0a0a0a !important;
+html[data-demolition-level="2"] html {
+  scrollbar-color: var(--demo-border) var(--demo-bg) !important;
 }
 
-body {
-  background-color: #0a0a0a !important;
-  color: #c0c0c0 !important;
-  max-width: 960px !important;
+html[data-demolition-level="2"] body {
+  max-width: 1200px !important;
   margin: 0 auto !important;
-  padding: 8px 16px !important;
+  padding: 10px !important;
+  display: grid !important;
+  grid-template-columns: minmax(170px, 24%) minmax(360px, 1fr) minmax(160px, 24%) !important;
+  gap: 10px !important;
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
 }
 
-/* ---- Kill Visual Bloat ---- */
-img, picture, canvas, svg,
-embed, object, applet,
-figure, figcaption,
-[role="img"],
-[style*="background-image"],
-[class*="hero"],
-[class*="banner"],
-[class*="carousel"],
-[class*="slider"],
-[class*="modal"],
-[class*="popup"],
-[class*="overlay"],
-[class*="toast"],
-[class*="notification"] {
+/* Keep Demolition overlays legible under hard reset. */
+html[data-demolition-level="2"] [data-demolition-ui],
+html[data-demolition-level="2"] [data-demolition-hints],
+html[data-demolition-level="2"] [data-demolition-hints] * {
+  color: #0f1116 !important;
+  background: #f7ff78 !important;
+  border: 1px solid #202530 !important;
+  font-weight: bold !important;
+}
+
+/* ---- Columnar content separation ---- */
+html[data-demolition-level="2"] body > * {
+  border: 1px solid var(--demo-border) !important;
+  padding: 6px !important;
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+}
+
+html[data-demolition-level="2"] header,
+html[data-demolition-level="2"] nav,
+html[data-demolition-level="2"] form,
+html[data-demolition-level="2"] [role="navigation"] {
+  grid-column: 1 !important;
+}
+
+html[data-demolition-level="2"] main,
+html[data-demolition-level="2"] article,
+html[data-demolition-level="2"] section,
+html[data-demolition-level="2"] [role="main"],
+html[data-demolition-level="2"] [data-main-content] {
+  grid-column: 2 !important;
+}
+
+html[data-demolition-level="2"] aside,
+html[data-demolition-level="2"] [role="complementary"],
+html[data-demolition-level="2"] [aria-label*="sidebar" i],
+html[data-demolition-level="2"] [class*="sidebar" i] {
+  grid-column: 3 !important;
+}
+
+html[data-demolition-level="2"] footer,
+html[data-demolition-level="2"] [role="contentinfo"] {
+  grid-column: 1 / span 3 !important;
+}
+
+/* If the page has too many root nodes, keep them in the main lane by default. */
+html[data-demolition-level="2"] body > *:not(header):not(nav):not(main):not(article):not(section):not(aside):not(footer):not([role="navigation"]):not([role="main"]):not([role="complementary"]):not([role="contentinfo"]) {
+  grid-column: 2 !important;
+}
+
+/* ---- Kill visual bloat in Level 2 ---- */
+html[data-demolition-level="2"] img,
+html[data-demolition-level="2"] picture,
+html[data-demolition-level="2"] canvas,
+html[data-demolition-level="2"] svg,
+html[data-demolition-level="2"] embed,
+html[data-demolition-level="2"] object,
+html[data-demolition-level="2"] applet,
+html[data-demolition-level="2"] figure,
+html[data-demolition-level="2"] figcaption,
+html[data-demolition-level="2"] [role="img"],
+html[data-demolition-level="2"] [style*="background-image"],
+html[data-demolition-level="2"] [class*="hero" i],
+html[data-demolition-level="2"] [class*="banner" i],
+html[data-demolition-level="2"] [class*="carousel" i],
+html[data-demolition-level="2"] [class*="slider" i],
+html[data-demolition-level="2"] [class*="modal" i],
+html[data-demolition-level="2"] [class*="popup" i],
+html[data-demolition-level="2"] [class*="overlay" i],
+html[data-demolition-level="2"] [class*="toast" i],
+html[data-demolition-level="2"] [class*="notification" i] {
   display: none !important;
   visibility: hidden !important;
   height: 0 !important;
@@ -70,159 +155,205 @@ figure, figcaption,
   overflow: hidden !important;
 }
 
-/* ---- Ensure Video/Audio Plays ---- */
-video, audio, iframe,
-#movie_player,
-.html5-video-player,
-ytd-player,
-#player-container-outer,
-#player-container-inner,
-#player,
-[id^="player-"] {
+/* ---- Ensure media playback survives ---- */
+html[data-demolition-level="2"] video,
+html[data-demolition-level="2"] audio,
+html[data-demolition-level="2"] iframe,
+html[data-demolition-level="2"] #movie_player,
+html[data-demolition-level="2"] .html5-video-player,
+html[data-demolition-level="2"] ytd-player,
+html[data-demolition-level="2"] #player-container-outer,
+html[data-demolition-level="2"] #player-container-inner,
+html[data-demolition-level="2"] #player,
+html[data-demolition-level="2"] [id^="player-"] {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
   max-width: 100% !important;
   height: auto !important;
+  grid-column: 2 !important;
 }
 
-video {
+html[data-demolition-level="2"] video {
   width: 100% !important;
   height: 100% !important;
-  min-height: 480px !important;
+  min-height: 320px !important;
 }
 
-/* ---- Semantic Typography ---- */
-h1, h2, h3, h4, h5, h6 {
+/* ---- Typography ---- */
+html[data-demolition-level="2"] h1,
+html[data-demolition-level="2"] h2,
+html[data-demolition-level="2"] h3,
+html[data-demolition-level="2"] h4,
+html[data-demolition-level="2"] h5,
+html[data-demolition-level="2"] h6 {
   font-weight: bold !important;
   color: #e0e0e0 !important;
-  margin-top: 12px !important;
-  margin-bottom: 4px !important;
-  border-bottom: 1px solid #333 !important;
+  margin-top: 10px !important;
+  margin-bottom: 3px !important;
+  border-bottom: 1px solid var(--demo-border) !important;
   padding-bottom: 2px !important;
 }
 
-h1 { font-size: 18px !important; }
-h2 { font-size: 16px !important; }
-h3 { font-size: 15px !important; }
-h4, h5, h6 { font-size: 14px !important; }
+html[data-demolition-level="2"] h1 { font-size: 18px !important; }
+html[data-demolition-level="2"] h2 { font-size: 16px !important; }
+html[data-demolition-level="2"] h3 { font-size: 15px !important; }
+html[data-demolition-level="2"] h4,
+html[data-demolition-level="2"] h5,
+html[data-demolition-level="2"] h6 { font-size: 14px !important; }
 
-p, li, td, th, dd, dt, span, label, div {
+html[data-demolition-level="2"] p,
+html[data-demolition-level="2"] li,
+html[data-demolition-level="2"] td,
+html[data-demolition-level="2"] th,
+html[data-demolition-level="2"] dd,
+html[data-demolition-level="2"] dt,
+html[data-demolition-level="2"] span,
+html[data-demolition-level="2"] label,
+html[data-demolition-level="2"] div {
   font-size: 13px !important;
-  color: #c0c0c0 !important;
+  color: var(--demo-ink) !important;
 }
 
-/* ---- Links ---- */
-a, a:visited, a:active {
-  color: #00ff41 !important;
+html[data-demolition-level="2"] a,
+html[data-demolition-level="2"] a:visited,
+html[data-demolition-level="2"] a:active {
+  color: var(--demo-link) !important;
   text-decoration: underline !important;
   cursor: pointer !important;
 }
 
-a:hover {
+html[data-demolition-level="2"] a:hover {
   color: #33ff66 !important;
 }
 
-/* ---- Lists ---- */
-ul, ol {
+html[data-demolition-level="2"] ul,
+html[data-demolition-level="2"] ol {
   list-style-position: inside !important;
-  margin-left: 16px !important;
-  margin-bottom: 4px !important;
+  margin-left: 10px !important;
+  margin-bottom: 3px !important;
 }
 
-ul { list-style-type: disc !important; }
-ol { list-style-type: decimal !important; }
+html[data-demolition-level="2"] ul { list-style-type: disc !important; }
+html[data-demolition-level="2"] ol { list-style-type: decimal !important; }
 
-li {
+html[data-demolition-level="2"] li {
   display: list-item !important;
   margin-bottom: 2px !important;
 }
 
-/* ---- Tables ---- */
-table {
+html[data-demolition-level="2"] table {
   border-collapse: collapse !important;
   width: 100% !important;
   margin-bottom: 8px !important;
 }
 
-th, td {
-  border: 1px solid #333 !important;
-  padding: 4px 8px !important;
+html[data-demolition-level="2"] th,
+html[data-demolition-level="2"] td {
+  border: 1px solid var(--demo-border) !important;
+  padding: 4px 6px !important;
   text-align: left !important;
 }
 
-th {
+html[data-demolition-level="2"] th {
   color: #e0e0e0 !important;
   font-weight: bold !important;
   background-color: #1a1a1a !important;
 }
 
-tr:nth-child(even) td {
-  background-color: #111 !important;
+html[data-demolition-level="2"] tr:nth-child(even) td {
+  background-color: var(--demo-panel) !important;
 }
 
-/* ---- Block Elements ---- */
-pre, code, kbd, samp {
-  background-color: #111 !important;
-  color: #00ff41 !important;
+html[data-demolition-level="2"] pre,
+html[data-demolition-level="2"] code,
+html[data-demolition-level="2"] kbd,
+html[data-demolition-level="2"] samp {
+  background-color: var(--demo-panel) !important;
+  color: var(--demo-link) !important;
   padding: 2px 4px !important;
   font-size: 13px !important;
 }
 
-pre {
+html[data-demolition-level="2"] pre {
   padding: 8px !important;
-  border: 1px solid #333 !important;
+  border: 1px solid var(--demo-border) !important;
   overflow-x: auto !important;
   margin-bottom: 8px !important;
 }
 
-blockquote {
-  border-left: 3px solid #00ff41 !important;
-  padding-left: 12px !important;
+html[data-demolition-level="2"] blockquote {
+  border-left: 3px solid var(--demo-link) !important;
+  padding-left: 10px !important;
   color: #999 !important;
   margin-bottom: 8px !important;
 }
 
-hr {
+html[data-demolition-level="2"] hr {
   display: block !important;
   height: 1px !important;
-  border-top: 1px solid #333 !important;
+  border-top: 1px solid var(--demo-border) !important;
   margin: 8px 0 !important;
 }
 
-/* ---- Forms ---- */
-input, textarea, select, button {
-  background-color: #111 !important;
-  color: #c0c0c0 !important;
-  border: 1px solid #333 !important;
+html[data-demolition-level="2"] input,
+html[data-demolition-level="2"] textarea,
+html[data-demolition-level="2"] select,
+html[data-demolition-level="2"] button {
+  background-color: var(--demo-panel) !important;
+  color: var(--demo-ink) !important;
+  border: 1px solid var(--demo-border) !important;
   padding: 4px 8px !important;
   font-size: 13px !important;
 }
 
-button, input[type="submit"], input[type="button"] {
-  color: #00ff41 !important;
+html[data-demolition-level="2"] button,
+html[data-demolition-level="2"] input[type="submit"],
+html[data-demolition-level="2"] input[type="button"] {
+  color: var(--demo-link) !important;
   cursor: pointer !important;
 }
 
-button:hover, input[type="submit"]:hover {
+html[data-demolition-level="2"] button:hover,
+html[data-demolition-level="2"] input[type="submit"]:hover {
   background-color: #1a1a1a !important;
   color: #33ff66 !important;
 }
 
-/* ---- Scrollbar ---- */
-::-webkit-scrollbar {
+html[data-demolition-level="2"] ::-webkit-scrollbar {
   width: 8px !important;
   height: 8px !important;
 }
 
-::-webkit-scrollbar-track {
-  background: #0a0a0a !important;
+html[data-demolition-level="2"] ::-webkit-scrollbar-track {
+  background: var(--demo-bg) !important;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #333 !important;
+html[data-demolition-level="2"] ::-webkit-scrollbar-thumb {
+  background: var(--demo-border) !important;
 }
 
-::-webkit-scrollbar-thumb:hover {
+html[data-demolition-level="2"] ::-webkit-scrollbar-thumb:hover {
   background: #555 !important;
+}
+
+@media (max-width: 900px) {
+  html[data-demolition-level="2"] body {
+    grid-template-columns: 1fr !important;
+  }
+
+  html[data-demolition-level="2"] header,
+  html[data-demolition-level="2"] nav,
+  html[data-demolition-level="2"] main,
+  html[data-demolition-level="2"] article,
+  html[data-demolition-level="2"] section,
+  html[data-demolition-level="2"] aside,
+  html[data-demolition-level="2"] footer,
+  html[data-demolition-level="2"] [role="navigation"],
+  html[data-demolition-level="2"] [role="main"],
+  html[data-demolition-level="2"] [role="complementary"],
+  html[data-demolition-level="2"] [role="contentinfo"],
+  html[data-demolition-level="2"] body > * {
+    grid-column: 1 !important;
+  }
 }

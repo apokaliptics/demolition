@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demolition Dashboard</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app">
+    <header class="panel panel-accent">
+      <h1>Demolition Dashboard</h1>
+      <p id="domainLabel" class="muted">No active tab</p>
+      <label class="toggle-row">
+        <span>Extension Enabled</span>
+        <input id="enabledToggle" type="checkbox">
+      </label>
+    </header>
+
+    <section class="panel">
+      <h2>Contextual Nuke Level</h2>
+      <div class="levels" role="radiogroup" aria-label="Nuke level">
+        <label><input type="radio" name="level" value="0"> <span>L0 Off</span></label>
+        <label><input type="radio" name="level" value="1"> <span>L1 Soft</span></label>
+        <label><input type="radio" name="level" value="2"> <span>L2 Demolition</span></label>
+      </div>
+      <label class="toggle-row">
+        <span>Whitelist Domain</span>
+        <input id="whitelistToggle" type="checkbox">
+      </label>
+      <label class="toggle-row">
+        <span>Auto Purge On Tab Close</span>
+        <input id="autoPurgeToggle" type="checkbox">
+      </label>
+      <label class="toggle-row">
+        <span>Vim Navigation (L2)</span>
+        <input id="vimToggle" type="checkbox">
+      </label>
+    </section>
+
+    <section class="panel panel-stat">
+      <h2>Session Savings</h2>
+      <p id="savedCounter" class="counter">0.00 MB</p>
+      <p id="blockedCounter" class="muted">0 requests blocked</p>
+      <button id="resetStatsBtn" type="button">Reset Counter</button>
+    </section>
+
+    <section class="panel">
+      <h2>Text-Only Search</h2>
+      <form id="searchForm">
+        <input id="searchInput" type="text" placeholder="Search via DuckDuckGo" autocomplete="off">
+        <button type="submit">Search</button>
+      </form>
+      <div id="searchResults" class="results"></div>
+    </section>
+
+    <p id="statusLine" class="status">Ready.</p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

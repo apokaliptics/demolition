@@ -17,8 +17,15 @@
 (function () {
   "use strict";
 
-  // Mark the document so our other scripts can detect Demolition
-  document.documentElement.setAttribute("data-demolition", "active");
+  var currentPolicy = {
+    level: 2,
+    vimEnabled: true,
+    isWhitelisted: false,
+    enabled: true
+  };
+
+  // Mark that the extension is present; level gating is applied separately.
+  document.documentElement.setAttribute("data-demolition", "loaded");
 
   /**
    * Remove known bloat containers that CSS alone can't fully suppress
@@ -28,23 +35,27 @@
    */
   function removeBloatNodes(root) {
     var selectors = [
-      // Cookie / consent banners
       '[id*="cookie" i]',
       '[id*="consent" i]',
       '[class*="cookie" i]',
       '[class*="consent" i]',
-      // Chat widgets
       '[id*="chat-widget" i]',
       '[class*="chat-widget" i]',
       '[id*="intercom" i]',
-      // Ad containers
       '[id*="google_ads" i]',
       '[id*="ad-container" i]',
       '[class*="ad-slot" i]',
-      // Newsletter / signup popups
       '[class*="newsletter-popup" i]',
       '[class*="signup-modal" i]'
     ];
+
+    // Level 2 runs a more aggressive cleanup pass.
+    if (currentPolicy.level === 2) {
+      selectors.push('[class*="modal" i]');
+      selectors.push('[class*="overlay" i]');
+      selectors.push('[class*="toast" i]');
+      selectors.push('[class*="notification" i]');
+    }
 
     var combined = selectors.join(", ");
 
@@ -64,15 +75,58 @@
     }
   }
 
-  // ---- Initial pass (after DOM is ready) ----
-  function initialPass() {
-    removeBloatNodes();
+  function applyPolicy(policy) {
+    currentPolicy = policy || currentPolicy;
+    var level = Number(currentPolicy.level);
+
+    if (!Number.isFinite(level)) {
+      level = 2;
+    }
+
+    if (level < 0) level = 0;
+    if (level > 2) level = 2;
+
+    document.documentElement.setAttribute("data-demolition-level", String(level));
+    document.documentElement.setAttribute(
+      "data-demolition-vim",
+      currentPolicy.vimEnabled ? "on" : "off"
+    );
+
+    if (level === 0) {
+      document.documentElement.setAttribute("data-demolition", "inactive");
+      return;
+    }
+
+    document.documentElement.setAttribute("data-demolition", "active");
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initialPass, { once: true });
-  } else {
-    initialPass();
+  function fetchPolicy() {
+    return new Promise(function (resolve) {
+      try {
+        chrome.runtime.sendMessage(
+          {
+            action: "getPagePolicy",
+            url: window.location.href,
+            hostname: window.location.hostname
+          },
+          function (response) {
+            if (chrome.runtime.lastError || !response || !response.ok || !response.policy) {
+              resolve(currentPolicy);
+              return;
+            }
+            resolve(response.policy);
+          }
+        );
+      } catch (error) {
+        resolve(currentPolicy);
+      }
+    });
+  }
+
+  // ---- Initial pass (after policy and DOM are ready) ----
+  function initialPass() {
+    if (currentPolicy.level === 0) return;
+    removeBloatNodes();
   }
 
   // ---- MutationObserver: catch dynamically injected bloat ----
@@ -80,6 +134,7 @@
   var throttleTimer = null;
 
   var observer = new MutationObserver(function () {
+    if (currentPolicy.level === 0) return;
     if (throttleTimer) return;
     throttleTimer = setTimeout(function () {
       throttleTimer = null;
@@ -88,15 +143,35 @@
   });
 
   function startObserving() {
+    if (currentPolicy.level === 0) return;
     var target = document.body || document.documentElement;
     if (target) {
       observer.observe(target, { childList: true, subtree: true });
     }
   }
 
-  if (document.body) {
+  fetchPolicy().then(function (policy) {
+    applyPolicy(policy);
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", function () {
+        initialPass();
+        startObserving();
+      }, { once: true });
+      return;
+    }
+
+    initialPass();
     startObserving();
-  } else {
-    document.addEventListener("DOMContentLoaded", startObserving, { once: true });
-  }
+  });
+
+  chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+    if (!message || message.action !== "refreshPagePolicy") return;
+    fetchPolicy().then(function (policy) {
+      applyPolicy(policy);
+      initialPass();
+      sendResponse({ ok: true, policy: policy });
+    });
+    return true;
+  });
 })();
