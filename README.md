@@ -36,6 +36,9 @@ Hyper-minimalist, text-first Chrome extension (Manifest V3).
 3. Enable **Developer Mode**.
 4. Click **Load unpacked** and select this folder.
 
+## Credit
+- Made by Kiet Minh (Apocalypse).
+
 ## Notes and Constraints
 - Dynamic request blocking is managed at runtime by `background.js` using `declarativeNetRequest.updateDynamicRules`.
 - Session savings are heuristic estimates, not filesystem-level measurements.

@@ -77,6 +77,18 @@ html[data-demolition-level="2"] body {
   overflow-wrap: break-word !important;
 }
 
+/* Flatten common SPA shell wrappers so semantic children can occupy columns. */
+html[data-demolition-level="2"] body > #app,
+html[data-demolition-level="2"] body > #root,
+html[data-demolition-level="2"] body > [id*="app" i],
+html[data-demolition-level="2"] body > [id*="root" i],
+html[data-demolition-level="2"] body > .app,
+html[data-demolition-level="2"] body > .root,
+html[data-demolition-level="2"] body > [class*="layout" i],
+html[data-demolition-level="2"] body > [class*="container" i] {
+  display: contents !important;
+}
+
 /* Keep Demolition overlays legible under hard reset. */
 html[data-demolition-level="2"] [data-demolition-ui],
 html[data-demolition-level="2"] [data-demolition-hints],
@@ -120,6 +132,32 @@ html[data-demolition-level="2"] [class*="sidebar" i] {
 html[data-demolition-level="2"] footer,
 html[data-demolition-level="2"] [role="contentinfo"] {
   grid-column: 1 / span 3 !important;
+}
+
+/* Catch nested semantic blocks once shell wrappers are flattened. */
+html[data-demolition-level="2"] body main,
+html[data-demolition-level="2"] body article,
+html[data-demolition-level="2"] body [role="main"],
+html[data-demolition-level="2"] body [data-main-content] {
+  grid-column: 2 !important;
+  border: 1px solid var(--demo-border) !important;
+  padding: 6px !important;
+}
+
+html[data-demolition-level="2"] body aside,
+html[data-demolition-level="2"] body [role="complementary"],
+html[data-demolition-level="2"] body [class*="sidebar" i] {
+  grid-column: 3 !important;
+  border: 1px solid var(--demo-border) !important;
+  padding: 6px !important;
+}
+
+html[data-demolition-level="2"] body header,
+html[data-demolition-level="2"] body nav,
+html[data-demolition-level="2"] body [role="navigation"] {
+  grid-column: 1 !important;
+  border: 1px solid var(--demo-border) !important;
+  padding: 6px !important;
 }
 
 /* If the page has too many root nodes, keep them in the main lane by default. */

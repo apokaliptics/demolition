@@ -156,3 +156,11 @@ button:hover {
   font-size: 11px;
   color: #93b8ff;
 }
+
+.credit {
+  margin: 8px 0 0;
+  font-size: 10px;
+  color: #7383a8;
+  text-align: right;
+  letter-spacing: 0.2px;
+}
