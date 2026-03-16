@@ -81,6 +81,26 @@ This writes:
 1. A metadata file at `--overflow-output`
 2. Chunk files next to it (for example `core-network.overflow.chunk1.json`) with deterministic continuation IDs
 
+Build large out-of-the-box rules from major public lists:
+```powershell
+./tools/build-rules.ps1
+```
+
+This script downloads EasyList and EasyPrivacy into `rules/lists/`, then compiles:
+1. `rules/core-network.json`
+2. `rules/core-privacy.json`
+
+Optional flags:
+```powershell
+# Raise/lower static cap
+./tools/build-rules.ps1 -MaxStaticRules 30000
+
+# Use adblock-rust parser bridge
+./tools/build-rules.ps1 -UseAdblockBridge
+```
+
+After building, reload the extension in `chrome://extensions` to apply updated static rules.
+
 Run compiler tests:
 ```bash
 cd tools/filter-compiler-rs
