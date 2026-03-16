@@ -1,48 +1,6 @@
 [
   {
-    "id": 1,
-    "priority": 1,
-    "action": { "type": "block" },
-    "condition": {
-      "resourceTypes": ["image"]
-    }
-  },
-  {
-    "id": 2,
-    "priority": 1,
-    "action": { "type": "block" },
-    "condition": {
-      "resourceTypes": ["font"]
-    }
-  },
-  {
-    "id": 3,
-    "priority": 1,
-    "action": { "type": "block" },
-    "condition": {
-      "resourceTypes": ["object"]
-    }
-  },
-  {
-    "id": 4,
-    "priority": 1,
-    "action": { "type": "block" },
-    "condition": {
-      "urlFilter": "*.woff2",
-      "resourceTypes": ["font", "stylesheet"]
-    }
-  },
-  {
-    "id": 5,
-    "priority": 1,
-    "action": { "type": "block" },
-    "condition": {
-      "urlFilter": "*.woff",
-      "resourceTypes": ["font", "stylesheet"]
-    }
-  },
-  {
-    "id": 6,
+    "id": 1001,
     "priority": 2,
     "action": { "type": "block" },
     "condition": {
@@ -51,7 +9,7 @@
     }
   },
   {
-    "id": 7,
+    "id": 1002,
     "priority": 2,
     "action": { "type": "block" },
     "condition": {
@@ -60,7 +18,7 @@
     }
   },
   {
-    "id": 8,
+    "id": 1003,
     "priority": 2,
     "action": { "type": "block" },
     "condition": {
@@ -69,7 +27,7 @@
     }
   },
   {
-    "id": 9,
+    "id": 1004,
     "priority": 2,
     "action": { "type": "block" },
     "condition": {

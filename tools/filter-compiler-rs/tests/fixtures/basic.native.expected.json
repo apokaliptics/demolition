@@ -1,0 +1,42 @@
+[
+  {
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "resourceTypes": [
+        "script",
+        "image"
+      ],
+      "urlFilter": "||doubleclick.net^"
+    },
+    "id": 100,
+    "priority": 2
+  },
+  {
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "resourceTypes": [
+        "xmlhttprequest"
+      ],
+      "urlFilter": "||tracker.example^"
+    },
+    "id": 101,
+    "priority": 2
+  },
+  {
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "resourceTypes": [
+        "script"
+      ],
+      "urlFilter": "||cdn.example.com/assets/*.js"
+    },
+    "id": 102,
+    "priority": 1
+  }
+]

@@ -1,0 +1,6 @@
+! Basic ABP fixture for compiler testing
+||doubleclick.net^$script,image
+||cdn.example.com/assets/*.js$script
+example.com##.ad-banner
+@@||allowed.example^$document
+||tracker.example^$xmlhttprequest

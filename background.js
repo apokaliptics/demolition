@@ -10,13 +10,66 @@
 const SETTINGS_KEY = "demolitionSettings";
 const STATS_KEY = "demolitionSessionStats";
 
+const DNR_ID_RANGES = {
+  STATIC: { min: 1, max: 30000 },
+  DYNAMIC: { min: 30001, max: 34000 },
+  SESSION: { min: 34001, max: 36000 }
+};
+
+const STATIC_RULESET_IDS = ["core_network", "core_privacy"];
+
+const LEGACY_DYNAMIC_RULE_IDS = [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010];
+
 const DYNAMIC_RULES = {
-  IMAGE: 1001,
-  FONT: 1002,
-  OBJECT: 1003,
-  WOFF2: 1004,
-  WOFF: 1005,
-  YTM_VIDEO: 1006
+  IMAGE: 30001,
+  FONT: 30002,
+  OBJECT: 30003,
+  WOFF2: 30004,
+  WOFF: 30005,
+  YTM_VIDEO: 30006,
+  DOUBLECLICK: 30007,
+  GOOGLE_ADSERVICES: 30008,
+  GOOGLE_SYNDICATION: 30009,
+  GOOGLE_ADSERVICE: 30010,
+  GOOGLE_ADS_DOUBLECLICK: 30011,
+  YOUTUBE_PAGEAD: 30012
+};
+
+const COSMETIC_SELECTORS = {
+  base: [
+    '[id*="cookie" i]',
+    '[id*="consent" i]',
+    '[class*="cookie" i]',
+    '[class*="consent" i]',
+    '[id*="chat-widget" i]',
+    '[class*="chat-widget" i]',
+    '[id*="intercom" i]',
+    '[id*="google_ads" i]',
+    '[id*="ad-container" i]',
+    '[class*="ad-slot" i]',
+    '[class*="newsletter-popup" i]',
+    '[class*="signup-modal" i]'
+  ],
+  level2Extra: [
+    '[class*="modal" i]',
+    '[class*="overlay" i]',
+    '[class*="toast" i]',
+    '[class*="notification" i]'
+  ],
+  youtube: [
+    '.ytp-ad-text',
+    '.ytp-ad-player-overlay',
+    '.ytp-ad-message-container',
+    '.ytd-display-ad-renderer',
+    '.ytd-promoted-video-renderer',
+    '.ytd-companion-slot-renderer'
+  ],
+  youtubePreserve: [
+    '.video-ads',
+    '.ytp-ad-skip-button-container',
+    '.ytp-ad-skip-button-slot',
+    '.ytp-ad-skip-button'
+  ]
 };
 
 const ESTIMATED_BYTES = {
@@ -41,6 +94,17 @@ let sessionStats = {
   blockedRequests: 0,
   estimatedBytes: 0,
   byType: {}
+};
+
+let runtimeRuleHealth = {
+  syncStatus: "pending",
+  lastSyncAt: 0,
+  lastSyncError: "",
+  staticRulesetsEnabled: 0,
+  dynamicRuleCount: 0,
+  sessionRuleCount: 0,
+  excludedDomainCount: 0,
+  extensionEnabled: true
 };
 
 const tabOrigins = new Map();
@@ -224,40 +288,277 @@ function createDynamicRules(excludedDomains) {
         resourceTypes: ["media"],
         excludedRequestDomains: excludedDomains
       }
+    },
+    {
+      id: DYNAMIC_RULES.DOUBLECLICK,
+      priority: 2,
+      action: { type: "block" },
+      condition: {
+        urlFilter: "||doubleclick.net^",
+        resourceTypes: ["script", "xmlhttprequest", "sub_frame", "image", "media"],
+        excludedRequestDomains: excludedDomains
+      }
+    },
+    {
+      id: DYNAMIC_RULES.GOOGLE_ADSERVICES,
+      priority: 2,
+      action: { type: "block" },
+      condition: {
+        urlFilter: "||googleadservices.com^",
+        resourceTypes: ["script", "xmlhttprequest", "sub_frame", "image", "media"],
+        excludedRequestDomains: excludedDomains
+      }
+    },
+    {
+      id: DYNAMIC_RULES.GOOGLE_SYNDICATION,
+      priority: 2,
+      action: { type: "block" },
+      condition: {
+        urlFilter: "||googlesyndication.com^",
+        resourceTypes: ["script", "xmlhttprequest", "sub_frame", "image", "media"],
+        excludedRequestDomains: excludedDomains
+      }
+    },
+    {
+      id: DYNAMIC_RULES.GOOGLE_ADSERVICE,
+      priority: 2,
+      action: { type: "block" },
+      condition: {
+        urlFilter: "||adservice.google.com^",
+        resourceTypes: ["script", "xmlhttprequest", "sub_frame", "image", "media"],
+        excludedRequestDomains: excludedDomains
+      }
+    },
+    {
+      id: DYNAMIC_RULES.GOOGLE_ADS_DOUBLECLICK,
+      priority: 2,
+      action: { type: "block" },
+      condition: {
+        urlFilter: "||googleads.g.doubleclick.net^",
+        resourceTypes: ["script", "xmlhttprequest", "sub_frame", "image", "media"],
+        excludedRequestDomains: excludedDomains
+      }
+    },
+    {
+      id: DYNAMIC_RULES.YOUTUBE_PAGEAD,
+      priority: 3,
+      action: { type: "block" },
+      condition: {
+        urlFilter: "||youtube.com/pagead/",
+        resourceTypes: ["script", "xmlhttprequest", "sub_frame", "image", "media"],
+        excludedRequestDomains: excludedDomains
+      }
     }
   ];
 }
 
-async function syncDynamicRules() {
-  const settings = await loadSettings();
-  const ruleIds = Object.values(DYNAMIC_RULES);
+function getManagedDynamicRuleIds() {
+  return Array.from(new Set(Object.values(DYNAMIC_RULES).concat(LEGACY_DYNAMIC_RULE_IDS)));
+}
 
-  if (!settings.enabled) {
-    await chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: ruleIds,
-      addRules: []
-    });
-    return;
+function getManagedSessionRuleIds() {
+  const ids = [];
+  for (let id = DNR_ID_RANGES.SESSION.min; id <= DNR_ID_RANGES.SESSION.max; id += 1) {
+    ids.push(id);
+  }
+  return ids;
+}
+
+function createSessionAllowRules(excludedDomains) {
+  const maxRules = DNR_ID_RANGES.SESSION.max - DNR_ID_RANGES.SESSION.min + 1;
+  const domains = (excludedDomains || []).slice(0, maxRules);
+
+  return domains.map(function (domain, index) {
+    return {
+      id: DNR_ID_RANGES.SESSION.min + index,
+      priority: 10000,
+      action: { type: "allowAllRequests" },
+      condition: {
+        requestDomains: [domain]
+      }
+    };
+  });
+}
+
+function dedupeRulesById(rules) {
+  const byId = new Map();
+  (rules || []).forEach(function (rule) {
+    if (rule && Number.isInteger(rule.id)) {
+      byId.set(rule.id, rule);
+    }
+  });
+  return Array.from(byId.values());
+}
+
+function validateRuntimeRules(rules) {
+  (rules || []).forEach(function (rule) {
+    if (!rule || !rule.condition) {
+      throw new Error("Invalid runtime rule payload");
+    }
+    if (rule.id < DNR_ID_RANGES.DYNAMIC.min || rule.id > DNR_ID_RANGES.DYNAMIC.max) {
+      throw new Error("Rule ID outside dynamic range: " + rule.id);
+    }
+    if (!Array.isArray(rule.condition.excludedRequestDomains)) {
+      throw new Error("Rule missing excludedRequestDomains: " + rule.id);
+    }
+  });
+}
+
+function validateSessionRules(rules) {
+  (rules || []).forEach(function (rule) {
+    if (!rule || !rule.condition) {
+      throw new Error("Invalid session rule payload");
+    }
+    if (rule.id < DNR_ID_RANGES.SESSION.min || rule.id > DNR_ID_RANGES.SESSION.max) {
+      throw new Error("Rule ID outside session range: " + rule.id);
+    }
+    if (!rule.action || rule.action.type !== "allowAllRequests") {
+      throw new Error("Session rule must use allowAllRequests: " + rule.id);
+    }
+    if (!Array.isArray(rule.condition.requestDomains) || !rule.condition.requestDomains.length) {
+      throw new Error("Session rule missing requestDomains: " + rule.id);
+    }
+  });
+}
+
+async function syncStaticRulesets(enabled) {
+  const currentlyEnabled = await chrome.declarativeNetRequest.getEnabledRulesets();
+  const enabledSet = new Set(currentlyEnabled || []);
+  const targetSet = new Set(enabled ? STATIC_RULESET_IDS : []);
+
+  const enableRulesetIds = [];
+  const disableRulesetIds = [];
+
+  STATIC_RULESET_IDS.forEach(function (id) {
+    if (targetSet.has(id) && !enabledSet.has(id)) {
+      enableRulesetIds.push(id);
+    }
+    if (!targetSet.has(id) && enabledSet.has(id)) {
+      disableRulesetIds.push(id);
+    }
+  });
+
+  if (!enableRulesetIds.length && !disableRulesetIds.length) {
+    return targetSet.size;
   }
 
-  const excludedDomains = getExcludedDomains(settings);
-  const addRules = createDynamicRules(excludedDomains);
-  await chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: ruleIds,
-    addRules: addRules
+  await chrome.declarativeNetRequest.updateEnabledRulesets({
+    enableRulesetIds: enableRulesetIds,
+    disableRulesetIds: disableRulesetIds
   });
+
+  const updated = await chrome.declarativeNetRequest.getEnabledRulesets();
+  return (updated || []).filter(function (id) {
+    return STATIC_RULESET_IDS.indexOf(id) >= 0;
+  }).length;
+}
+
+function updateRuntimeRuleHealth(partial) {
+  runtimeRuleHealth = Object.assign({}, runtimeRuleHealth, partial);
+}
+
+function getRuntimeRuleHealth() {
+  return Object.assign({}, runtimeRuleHealth);
+}
+
+async function syncDynamicRules() {
+  const settings = await loadSettings();
+  const dynamicRuleIds = getManagedDynamicRuleIds();
+  const sessionRuleIds = getManagedSessionRuleIds();
+
+  try {
+    if (!settings.enabled) {
+      const staticEnabled = await syncStaticRulesets(false);
+      await chrome.declarativeNetRequest.updateDynamicRules({
+        removeRuleIds: dynamicRuleIds,
+        addRules: []
+      });
+      await chrome.declarativeNetRequest.updateSessionRules({
+        removeRuleIds: sessionRuleIds,
+        addRules: []
+      });
+
+      updateRuntimeRuleHealth({
+        syncStatus: "ok",
+        lastSyncAt: Date.now(),
+        lastSyncError: "",
+        staticRulesetsEnabled: staticEnabled,
+        dynamicRuleCount: 0,
+        sessionRuleCount: 0,
+        excludedDomainCount: 0,
+        extensionEnabled: false
+      });
+      return;
+    }
+
+    const excludedDomains = getExcludedDomains(settings);
+    const staticEnabled = await syncStaticRulesets(true);
+
+    const addRules = dedupeRulesById(createDynamicRules(excludedDomains));
+    validateRuntimeRules(addRules);
+
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: dynamicRuleIds,
+      addRules: addRules
+    });
+
+    const sessionRules = dedupeRulesById(createSessionAllowRules(excludedDomains));
+    validateSessionRules(sessionRules);
+
+    await chrome.declarativeNetRequest.updateSessionRules({
+      removeRuleIds: sessionRuleIds,
+      addRules: sessionRules
+    });
+
+    updateRuntimeRuleHealth({
+      syncStatus: "ok",
+      lastSyncAt: Date.now(),
+      lastSyncError: "",
+      staticRulesetsEnabled: staticEnabled,
+      dynamicRuleCount: addRules.length,
+      sessionRuleCount: sessionRules.length,
+      excludedDomainCount: excludedDomains.length,
+      extensionEnabled: true
+    });
+  } catch (error) {
+    updateRuntimeRuleHealth({
+      syncStatus: "error",
+      lastSyncAt: Date.now(),
+      lastSyncError: String(error),
+      extensionEnabled: !!settings.enabled
+    });
+    throw error;
+  }
 }
 
 function makePagePolicy(hostname) {
   const settings = settingsCache || DEFAULT_SETTINGS;
   const level = getLevelForDomain(settings, hostname);
+  const safeHost = safeHostname(hostname);
+  const isYoutube = /(^|\.)youtube\.com$/i.test(safeHost);
+
+  const hideSelectors = COSMETIC_SELECTORS.base.slice();
+  if (level === 2) {
+    hideSelectors.push.apply(hideSelectors, COSMETIC_SELECTORS.level2Extra);
+  }
+  if (isYoutube) {
+    hideSelectors.push.apply(hideSelectors, COSMETIC_SELECTORS.youtube);
+  }
+
+  const preserveSelectors = isYoutube ? COSMETIC_SELECTORS.youtubePreserve.slice() : [];
+
   return {
     enabled: settings.enabled,
     hostname: hostname,
     level: level,
     isWhitelisted: !!(hostname && settings.whitelistDomains[hostname]),
     vimEnabled: settings.vimEnabled && level === 2,
-    autoPurgeEnabled: !!(hostname && settings.autoPurgeDomains[hostname])
+    autoPurgeEnabled: !!(hostname && settings.autoPurgeDomains[hostname]),
+    cosmeticFiltering: {
+      hideSelectors: hideSelectors,
+      preserveSelectors: preserveSelectors,
+      throttleMs: isYoutube ? 180 : 500
+    }
   };
 }
 
@@ -349,14 +650,6 @@ chrome.tabs.onRemoved.addListener(async function (tabId) {
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   const action = message && message.action;
 
-  if (action === "closeTab" && sender.tab && sender.tab.id) {
-    chrome.tabs.remove(sender.tab.id).catch(function () {
-      // Tab may already be closed.
-    });
-    sendResponse({ ok: true, status: "closing" });
-    return true;
-  }
-
   if (action === "getPagePolicy") {
     loadSettings()
       .then(function () {
@@ -377,7 +670,8 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
           ok: true,
           settings: settings,
           policy: makePagePolicy(hostname),
-          stats: sessionStats
+          stats: sessionStats,
+          runtime: getRuntimeRuleHealth()
         });
       })
       .catch(function (error) {

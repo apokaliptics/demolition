@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Demolition",
   "version": "0.4.0",
-  "description": "Hyper-minimalist text-first universal client. Blocks bloat, nukes CSS, bypasses launchers.",
+  "description": "Hyper-minimalist text-first universal client. Blocks bloat and keeps pages readable.",
   "permissions": [
     "activeTab",
     "browsingData",
@@ -29,6 +29,20 @@
     "default_title": "Demolition Dashboard",
     "default_popup": "popup.html"
   },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "core_network",
+        "enabled": false,
+        "path": "rules/core-network.json"
+      },
+      {
+        "id": "core_privacy",
+        "enabled": false,
+        "path": "rules/core-privacy.json"
+      }
+    ]
+  },
   "background": {
     "service_worker": "background.js"
   },
@@ -39,14 +53,6 @@
       "js": ["content.js"],
       "run_at": "document_start",
       "all_frames": true
-    },
-    {
-      "matches": [
-        "*://*.roblox.com/games/*",
-        "*://www.roblox.com/games/*"
-      ],
-      "js": ["roblox.js"],
-      "run_at": "document_end"
     },
     {
       "matches": [
@@ -67,6 +73,14 @@
       ],
       "js": ["ytmusic.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "*://*.youtube.com/*",
+        "*://youtube.com/*"
+      ],
+      "js": ["youtube.js"],
+      "run_at": "document_end"
     }
   ]
 }

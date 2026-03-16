@@ -26,6 +26,18 @@ html[data-demolition-level="1"] [class*="newsletter" i] {
   display: none !important;
 }
 
+html[data-demolition-level="1"] .video-ads,
+html[data-demolition-level="1"] .ytp-ad-skip-button-container,
+html[data-demolition-level="1"] .ytp-ad-skip-button-slot,
+html[data-demolition-level="1"] .ytp-ad-skip-button {
+  display: block !important;
+  visibility: visible !important;
+  height: auto !important;
+  width: auto !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+}
+
 /* ---- Level 2 (Demolition): hard reset and text-mode canvas ---- */
 html[data-demolition-level="2"],
 html[data-demolition-level="2"] body {
@@ -191,6 +203,19 @@ html[data-demolition-level="2"] [class*="notification" i] {
   height: 0 !important;
   width: 0 !important;
   overflow: hidden !important;
+}
+
+html[data-demolition-level="2"] .video-ads,
+html[data-demolition-level="2"] .ytp-ad-skip-button-container,
+html[data-demolition-level="2"] .ytp-ad-skip-button-slot,
+html[data-demolition-level="2"] .ytp-ad-skip-button {
+  display: block !important;
+  visibility: visible !important;
+  height: auto !important;
+  width: auto !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 /* ---- Ensure media playback survives ---- */

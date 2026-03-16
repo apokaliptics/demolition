@@ -20,7 +20,6 @@ Hyper-minimalist, text-first Chrome extension (Manifest V3).
 - **Disk Space Saved Counter:** Session estimator based on blocked request classes.
 - **Auto Purge on Tab Close (Opt-In, Per Domain):** Clears origin-scoped data (`cookies`, `localStorage`, `indexedDB`, `cacheStorage`, etc.) when enabled.
 - **Text-Only Search Integration:** Popup DuckDuckGo HTML search renderer.
-- **Roblox Protocol Bypass:** Launches `roblox-player://` directly and closes the tab.
 - **Netflix Text List Mode:** Level 2 scraper that renders a links-only catalog view.
 
 ## Dashboard Usage
@@ -41,9 +40,57 @@ Hyper-minimalist, text-first Chrome extension (Manifest V3).
 
 ## Notes and Constraints
 - Dynamic request blocking is managed at runtime by `background.js` using `declarativeNetRequest.updateDynamicRules`.
+- Static DNR ruleset files in `rules/` are runtime-enabled by `background.js` when Demolition is enabled.
+- Whitelist/Level-0 domains are protected with high-priority session `allowAllRequests` overrides so static + dynamic blocking both bypass those hosts.
 - Session savings are heuristic estimates, not filesystem-level measurements.
 - Auto purge is origin-scoped and disabled by default.
 - No global HTTP cache wipe is performed.
+
+## Filter Compiler (Rust)
+- A Rust scaffold is available at `tools/filter-compiler-rs` for compiling ABP-style lists into MV3 DNR JSON.
+- Current stage supports:
+1. Basic URL blocking patterns (including `||example.com^`)
+2. Resource type mapping (`script`, `image`, `xmlhttprequest`, etc.)
+3. Deterministic unique ID assignment (`--start-id`)
+4. Static rule cap enforcement (`--max-static-rules`, default 30000)
+
+Example usage:
+```bash
+cd tools/filter-compiler-rs
+cargo run -- --input ../../rules.txt --output ../../rules/core-network.json --max-static-rules 30000 --start-id 1
+```
+
+Parser mode options:
+```bash
+# Native parser path (default)
+cargo run -- --input ../../rules.txt --output ../../rules/core-network.json --parser-mode native
+
+# adblock-rust parser bridge (build-time feature)
+cargo run --features adblock-bridge -- --input ../../rules.txt --output ../../rules/core-network.json --parser-mode adblock
+```
+
+Optional overflow outputs (for rules that exceed --max-static-rules):
+```bash
+cargo run -- --input ../../rules.txt --output ../../rules/core-network.json \
+	--max-static-rules 30000 \
+	--overflow-output ../../rules/core-network.overflow.json \
+	--overflow-chunk-size 5000
+```
+
+This writes:
+1. A metadata file at `--overflow-output`
+2. Chunk files next to it (for example `core-network.overflow.chunk1.json`) with deterministic continuation IDs
+
+Run compiler tests:
+```bash
+cd tools/filter-compiler-rs
+
+# Unit + golden fixture tests (native mode)
+cargo test
+
+# Unit + golden fixture tests with adblock bridge parity checks
+cargo test --features adblock-bridge
+```
 
 ## Technical Layout
 - `manifest.json`: MV3 setup, permissions, popup action, content scripts.
@@ -52,6 +99,27 @@ Hyper-minimalist, text-first Chrome extension (Manifest V3).
 - `content.js`: per-page policy resolution + level application markers.
 - `nuke.css`: level-aware CSS model and Level 2 columnar rendering.
 - `vim.js`: Level 2 keyboard navigation + link hints.
+- `youtube.js`: lightweight YouTube ad skip helper for dynamic ad UI surfaces.
 - `ytmusic.js`: YouTube Music headless overlay and controls.
 - `netflix.js`: Netflix text scraper.
-- `roblox.js`: Roblox protocol launcher bridge.
+- `rules/`: static ruleset JSON files for MV3 DNR `rule_resources`.
+- `tools/filter-compiler-rs`: ABP-to-DNR compiler scaffold.
+
+## Manual Verification Matrix
+Use the popup Runtime Rules line (`Rules: ...`) to confirm layer state while testing.
+
+1. Extension Disabled
+1. Toggle Extension Enabled off in popup.
+2. Expected Runtime Rules line: `ext=off`, `static=0`, `dyn=0`, `sess=0`, `status=ok`.
+3. Expected behavior: No Demolition network blocking/cosmetic filtering on reload.
+
+2. Extension Enabled, Normal Domain
+1. Toggle Extension Enabled on.
+2. Visit a non-whitelisted domain at Level 1 or 2.
+3. Expected Runtime Rules line: `ext=on`, `static>=1`, `dyn>0`, `status=ok`.
+4. Expected behavior: Blocking and cosmetic filtering active.
+
+3. Whitelisted or Explicit Level-0 Domain
+1. On a test domain, enable Whitelist or set level to L0.
+2. Expected Runtime Rules line: `sess>=1`, `excl>=1`, `status=ok`.
+3. Expected behavior: Domain bypasses static + dynamic blocking via session `allowAllRequests` rule.

@@ -6,7 +6,8 @@
     origin: "",
     settings: null,
     policy: null,
-    stats: null
+    stats: null,
+    runtime: null
   };
 
   var elements = {
@@ -17,6 +18,7 @@
     vimToggle: document.getElementById("vimToggle"),
     savedCounter: document.getElementById("savedCounter"),
     blockedCounter: document.getElementById("blockedCounter"),
+    ruleHealth: document.getElementById("ruleHealth"),
     searchForm: document.getElementById("searchForm"),
     searchInput: document.getElementById("searchInput"),
     searchResults: document.getElementById("searchResults"),
@@ -84,6 +86,40 @@
     elements.blockedCounter.textContent = (stats.blockedRequests || 0) + " requests blocked";
   }
 
+  function formatSyncAge(lastSyncAt) {
+    var ts = Number(lastSyncAt || 0);
+    if (!ts) return "never";
+    var seconds = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+    return seconds + "s ago";
+  }
+
+  function renderRuntimeHealth() {
+    var runtime = state.runtime || {};
+    var status = runtime.syncStatus || "pending";
+    var enabledFlag = runtime.extensionEnabled === false ? "off" : "on";
+    var details =
+      "Rules: " +
+      status +
+      " | ext=" +
+      enabledFlag +
+      " | static=" +
+      Number(runtime.staticRulesetsEnabled || 0) +
+      " | dyn=" +
+      Number(runtime.dynamicRuleCount || 0) +
+      " | sess=" +
+      Number(runtime.sessionRuleCount || 0) +
+      " | excl=" +
+      Number(runtime.excludedDomainCount || 0) +
+      " | sync=" +
+      formatSyncAge(runtime.lastSyncAt);
+
+    if (status === "error" && runtime.lastSyncError) {
+      details += " | err=" + runtime.lastSyncError;
+    }
+
+    elements.ruleHealth.textContent = details;
+  }
+
   function renderPolicy() {
     var policy = state.policy || { level: 2, isWhitelisted: false, autoPurgeEnabled: false };
 
@@ -113,9 +149,11 @@
     state.settings = response.settings;
     state.policy = response.policy;
     state.stats = response.stats;
+    state.runtime = response.runtime;
 
     renderPolicy();
     renderStats();
+    renderRuntimeHealth();
   }
 
   async function setLevel(level) {
